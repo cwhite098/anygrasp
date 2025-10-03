@@ -1,0 +1,193 @@
+<robot name="dexee_finger">
+    <!--Materials-->
+    <material name="">
+        <color rgba="0.7529 0.7529 0.7529 1"/>
+        <luminescence value="0"/>
+        <specularExponent value="40"/>
+        <specularIntensity value="0.25"/>
+    </material>
+    <!--Links-->
+    <robotProperties maxDepenetrationVelocity="10"/>
+    <link name="F0_base">
+        <inertial>
+            <origin xyz="0.00004454 0.00736569 0.08093736" rpy="0 0 0"/>
+            <mass value="0.89937782"/>
+            <density value="-1"/>
+            <inertia ixx="0.00186283" iyy="0.00181365" izz="0.00058221" ixy="-0.00000176" ixz="-0.00000296" iyz="0.00004212"/>
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 -0 0"/>
+            <geometry>
+                <mesh filename="meshes/F0_base.dae" scale="1 1 1"/>
+                <settings planeNormalTolerance="0.95" inflation="0" minThickness="0.0001" maxVerts="32" mapResolution="0"/>
+                <queryProperties useQueries="false"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 -0 0"/>
+            <geometry>
+                <mesh filename="meshes/collision/F0_base.stl" scale="1 1 1"/>
+                <settings planeNormalTolerance="0.95" inflation="0" minThickness="0.0001" maxVerts="32" mapResolution="0"/>
+                <queryProperties useQueries="false"/>
+            </geometry>
+        </collision>
+        <miscellaneous contactOffset="-1" restOffset="0"/>
+    </link>
+    <link name="F0_J0_link">
+        <inertial>
+            <origin xyz="-0.00017293 -0.01537184 0.00956679" rpy="0 0 0"/>
+            <mass value="0.13077995"/>
+            <density value="-1"/>
+            <inertia ixx="0.00005895" iyy="0.00004702" izz="0.00003911" ixy="0.00000007" ixz="0.00000064" iyz="-0.00000971"/>
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 -0 0"/>
+            <geometry>
+                <mesh filename="meshes/F0_J0_link.dae" scale="1 1 1"/>
+                <settings planeNormalTolerance="0.95" inflation="0" minThickness="0.0001" maxVerts="32" mapResolution="0"/>
+                <queryProperties useQueries="false"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 -0 0"/>
+            <geometry>
+                <mesh filename="meshes/collision/F0_J0_link.stl" scale="1 1 1"/>
+                <settings planeNormalTolerance="0.95" inflation="0" minThickness="0.0001" maxVerts="32" mapResolution="0"/>
+                <queryProperties useQueries="false"/>
+            </geometry>
+        </collision>
+        <miscellaneous contactOffset="-1" restOffset="0"/>
+    </link>
+    <link name="F0_proximal">
+        <inertial>
+            <origin xyz="-0.00020256 0.0024322 0.02375091" rpy="0 0 0"/>
+            <mass value="0.09614332"/>
+            <density value="-1"/>
+            <inertia ixx="0.00004332" iyy="0.00004756" izz="0.00002008" ixy="-0.00000017" ixz="-0.00000349" iyz="0.00000055"/>
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 -0 0"/>
+            <geometry>
+                <mesh filename="meshes/F0_proximal.dae" scale="1 1 1"/>
+                <settings planeNormalTolerance="0.95" inflation="0" minThickness="0.0001" maxVerts="32" mapResolution="0"/>
+                <queryProperties useQueries="false"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 -0 0"/>
+            <geometry>
+                <mesh filename="meshes/collision/F0_proximal.stl" scale="1 1 1"/>
+                <settings planeNormalTolerance="0.95" inflation="0" minThickness="0.0001" maxVerts="32" mapResolution="0"/>
+                <queryProperties useQueries="false"/>
+            </geometry>
+        </collision>
+        <miscellaneous contactOffset="-1" restOffset="0"/>
+    </link>
+    <link name="F0_middle">
+        <inertial>
+            <origin xyz="-0.00026744 -0.00004338 0.01669764" rpy="0 0 0"/>
+            <mass value="0.05585897"/>
+            <density value="-1"/>
+            <inertia ixx="0.00001447" iyy="0.00001686" izz="0.00000973" ixy="-0.00000005" ixz="-0.00000004" iyz="-0.00000007"/>
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 -0 0"/>
+            <geometry>
+                <mesh filename="meshes/F0_middle.dae" scale="1 1 1"/>
+                <settings planeNormalTolerance="0.95" inflation="0" minThickness="0.0001" maxVerts="32" mapResolution="0"/>
+                <queryProperties useQueries="false"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 -0 0"/>
+            <geometry>
+                <mesh filename="meshes/collision/F0_middle.stl" scale="1 1 1"/>
+                <settings planeNormalTolerance="0.95" inflation="0" minThickness="0.0001" maxVerts="32" mapResolution="0"/>
+                <queryProperties useQueries="false"/>
+            </geometry>
+        </collision>
+        <miscellaneous contactOffset="-1" restOffset="0"/>
+    </link>
+    <link name="F0_distal">
+        <inertial>
+            <origin xyz="0.00084325 0.00164346 0.01482169" rpy="0 0 0"/>
+            <mass value="0.02766365"/>
+            <density value="-1"/>
+            <inertia ixx="0.0000051" iyy="0.00000506" izz="0.00000198" ixy="0" ixz="0.00000028" iyz="-0.00000034"/>
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 -0 0"/>
+            <geometry>
+                <mesh filename="meshes/F0_distal.dae" scale="1 1 1"/>
+                <settings planeNormalTolerance="0.95" inflation="0" minThickness="0.0001" maxVerts="32" mapResolution="0"/>
+                <queryProperties useQueries="false"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 -0 0"/>
+            <geometry>
+                <mesh filename="meshes/collision/F0_distal.stl" scale="1 1 1"/>
+                <settings planeNormalTolerance="0.95" inflation="0" minThickness="0.0001" maxVerts="32" mapResolution="0"/>
+                <queryProperties useQueries="false"/>
+            </geometry>
+        </collision>
+        <miscellaneous contactOffset="-1" restOffset="0"/>
+    </link>
+    <joint name="F0_J0" type="revolute">
+        <child link="F0_J0_link"/>
+        <parent link="F0_base"/>
+        <origin xyz="0 0.015 0.179" rpy="0.5236 0 0"/>
+        <linkTransform xyz="0 0.015 0.179" rpy="0.5236 0 0"/>
+        <axis xyz="0 -1 0"/>
+        <limit lower="-0.959" upper="0.959" effort="1.5" velocity="2"/>
+        <dynamics damping="0" stiffness="0" friction="0" armature="0"/>
+    </joint>
+    <joint name="F0_J1" type="revolute">
+        <child link="F0_proximal"/>
+        <parent link="F0_J0_link"/>
+        <origin xyz="0 0 0.03" rpy="-0.3491 0 0"/>
+        <linkTransform xyz="0 0 0.03" rpy="-0.3491 0 0"/>
+        <axis xyz="1 0 0"/>
+        <limit lower="-1.396" upper="0.785" effort="1.2" velocity="2"/>
+        <dynamics damping="0" stiffness="0" friction="0" armature="0"/>
+    </joint>
+    <joint name="F0_J2" type="revolute">
+        <child link="F0_middle"/>
+        <parent link="F0_proximal"/>
+        <origin xyz="0 0 0.05" rpy="0 0 0"/>
+        <linkTransform xyz="0 0 0.05" rpy="0 0 0"/>
+        <axis xyz="1 0 0"/>
+        <limit lower="0" upper="1.396" effort="0.7" velocity="2"/>
+        <dynamics damping="0" stiffness="0" friction="0" armature="0"/>
+    </joint>
+    <joint name="F0_J3" type="revolute">
+        <child link="F0_distal"/>
+        <parent link="F0_middle"/>
+        <origin xyz="0 0 0.035" rpy="0 0 0"/>
+        <linkTransform xyz="0 0 0.035" rpy="0 0 0"/>
+        <axis xyz="1 0 0"/>
+        <limit lower="-0.523" upper="1.485" effort="0.35" velocity="0.2"/>
+        <dynamics damping="0" stiffness="0" friction="0" armature="0"/>
+    </joint>
+    <jointForceSensor value="true"/>
+    <filter>
+        <pair link0="F0_base" link1="F0_proximal"/>
+    </filter>
+
+
+    <depthCamera>
+        <camera name="finger_depth_camera" type="depth" farClip="1" fovX="2.0944" fovY="0.785398" resX="128" resY="64"/>
+    </depthCamera>
+
+    <depthCameraInstance>
+        <!--Camera names template: "{link_name}_camera_{camera_index_within_array}"
+            Depth camera instances are expected to be arranged as camera arrays with shared origin and oriented to have
+            aligned frustums, to be stitched vertically as a single seamless panoramic image,
+            stacking top-down starting from the camera indexed 0-->
+
+        <cameraInstance name="F0_distal_camera_0" camera="finger_depth_camera" link="F0_distal" xyz="0.0 -0.004 0.037" rpy="3.1415 0 0" />
+        <cameraInstance name="F0_distal_camera_1" camera="finger_depth_camera" link="F0_distal" xyz="0.0 -0.004 0.037" rpy="3.927 0 0" />
+        <cameraInstance name="F0_distal_camera_2" camera="finger_depth_camera" link="F0_distal" xyz="0.0 -0.004 0.037" rpy="4.712 0 0" />
+    </depthCameraInstance>
+
+</robot>
