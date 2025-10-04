@@ -12,13 +12,13 @@ from vis_grasp import ORIGIN
 from src.robot_config import DexeeConfig
 
 
-def load_data():
+def load_data(grasp_dir: str = "grasps"):
     grasp_points = []
     joint_angles = []
     object_transforms = []
     finger_assignments = []
-    for file in os.listdir("grasps"):
-        with open(f"grasps/{file}") as f:
+    for file in os.listdir(grasp_dir):
+        with open(f"{grasp_dir}/{file}") as f:
             data = json.load(f)
             grasp_points.append(data["contact_points"])
             joint_angles.append(data["grasp_config"])
