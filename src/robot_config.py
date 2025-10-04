@@ -1,9 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from klampt import WorldModel
 
-IDENTITY_ROTATION_MAT_FLAT = [1, 0, 0, 0, 1, 0, 0, 0, 1]
-IDENTITY_TRANSLATION = [0, 0, 0]
+from vis_grasp import ORIGIN
 
 
 @dataclass
@@ -13,6 +12,10 @@ class DexeeConfig:
     num_fingers: int = 3
     urdf_path: str = "dexee/dexee.urdf"
     base_link: str = "hand_base"  # link after the virtual arm
+
+    fingertip_grasp_offset: list[float] = field(
+        default_factory=lambda: [0.0, -0.011804481602826016, 5.551115123125783e-17]
+    )
 
     def __post_init__(self):
         world = WorldModel()
@@ -34,8 +37,8 @@ class DexeeConfig:
 
         base_link = robot.link(self.base_link)
         R, t = base_link.getTransform()
-        assert t == IDENTITY_TRANSLATION
-        assert R == IDENTITY_ROTATION_MAT_FLAT
+        assert t == ORIGIN[1]
+        assert R == ORIGIN[0]
 
     def _get_num_joints(self, robot):
         # TODO: figure out what to do about fixed joints not being collapsed

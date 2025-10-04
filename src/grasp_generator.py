@@ -1,5 +1,8 @@
 from itertools import permutations
+from typing import NamedTuple
 import time
+import os
+import json
 
 from scipy.spatial.transform import Rotation as R
 import numpy as np
@@ -11,54 +14,76 @@ from klampt.math import se3
 from klampt.model.contact import ContactPoint, force_closure
 
 from vis_grasp import ORIGIN
+from src.robot_config import DexeeConfig
+
+
+def klampt_transform_to_htm(rot: list[float], t: list[float]) -> np.ndarray:
+    """
+    Transform a klampt rotation and translation into a homogeneous transformation matrix.
+    Klampt is column major!!
+    """
+    rotation = np.array([rot[:3], rot[3:6], rot[6:]])
+    translation = np.array(t)
+    htm = np.array(
+        [
+            [rotation[0, 0], rotation[1, 0], rotation[2, 0], translation[0]],
+            [rotation[0, 1], rotation[1, 1], rotation[2, 1], translation[1]],
+            [rotation[0, 2], rotation[1, 2], rotation[2, 2], translation[2]],
+            [0, 0, 0, 1],
+        ]
+    )
+    return htm
+
+
+class Grasp(NamedTuple):
+    contact_points: list[list[float]]
+    grasp_config: list[float]
+    object_htm: list[list[float]]
 
 
 class GraspGenerator:
     def __init__(
         self,
-        robot_config,
-        stl_path,
-        num_grasp_points,
-        grasp_force_tolerance=0.1,
-        visualise=False,
+        robot_config: DexeeConfig,
+        stl_path: str,
+        num_grasp_points: int,
+        grasp_force_tolerance: float = 0.1,
+        visualise: bool = False,
+        save_dir: str | None = None,
     ):
-        self.robot_config = robot_config
+        self.robot_config: DexeeConfig = robot_config
         self.stl_path = stl_path
         self.grasp_force_tolerance = grasp_force_tolerance
         self.num_grasp_points = num_grasp_points
         self.visualise = visualise
+        self.save_dir = save_dir
 
         self.world = WorldModel()
 
         self.object = primitives.Geometry3D()
         self.object.loadFile(self.stl_path)
 
+        self.world.loadElement(robot_config.urdf_path)
+        self.robot = self.world.robot(0)
+
         if self.visualise:
             vis.clear()
             vis.add("object", self.object)
             vis.add("origin", ORIGIN)
             vis.autoFitCamera(rotate=False, scale=0.7)
-            vis.show()
-
-        self.world.loadElement(robot_config.urdf_path)
-        self.robot = self.world.robot(0)
-
-        if self.visualise:
             vis.add("robot", self.robot)
+            vis.show()
 
     def analyse_grasp_stability(self):
         # Gonna run with this for now cos simple
         return force_closure(self.contact_points)
 
-    def load_object(self, rotation):
+    def load_object(self, rotation) -> tuple[np.ndarray, np.ndarray]:
         points, normals = self._sample_mesh(rotation)
 
-        norm_normals = []
-        for n in normals:
+        for i, n in enumerate(normals):
             n = n / np.linalg.norm(n)
-            norm_normals.append(n)
-        normals = np.array(norm_normals)
-        print(normals.shape)
+            normals[i] = n
 
         object_rotation_wrt_world = self.object_rotation.as_matrix()
         # transpose because klampt is column major
@@ -79,13 +104,12 @@ class GraspGenerator:
                 ik_objectives.append(
                     ik.objective(
                         self.robot.link(fingertip),
-                        local=[0.0, -0.011804481602826016, 5.551115123125783e-17],
+                        local=self.robot_config.fingertip_grasp_offset,
                         world=grasp_points_wrt_world[i],
                     )
                 )
 
             def feasible():
-                # zcollision_detected = False
                 for link in self.robot.links:
                     if self.object.collides(link.geometry()):
                         return False
@@ -104,7 +128,50 @@ class GraspGenerator:
                 return True
         return False
 
-    def generate_grasp(self, visualise=False):
+    def transform_into_robot_space(self) -> np.ndarray:
+        """
+        Transform the grasp points and object into the robot space.
+        """
+        # Transform the grasp and object into robot space
+        object_rotation = self.object_rotation.as_matrix()
+        object_htm_wrt_world = klampt_transform_to_htm(object_rotation.flatten(), [0, 0, 0])
+
+        rot, t = self.robot.link(self.robot_config.base_link).getTransform()
+        robot_htm_wrt_world = klampt_transform_to_htm(rot, t)
+        object_htm_wrt_robot = np.linalg.inv(robot_htm_wrt_world) @ object_htm_wrt_world
+
+        self.grasp_config[:6] = [0, 0, 0, 0, 0, 0]  # reset the virtual arm (hand base -> origin)
+        self.robot.setConfig(self.grasp_config)
+        self.robot.link("hand_base").setTransform(ORIGIN[0], ORIGIN[1])
+
+        # Transform the contact points and object pointcloud into robot space
+        for i, point in enumerate(self.contact_points):
+            point.transform(se3.from_homogeneous(np.linalg.inv(object_htm_wrt_world)))
+            point.transform(se3.from_homogeneous(object_htm_wrt_robot))
+
+        rot, t = se3.from_homogeneous(np.linalg.inv(object_htm_wrt_world))
+        self.object_pointcloud.transform(rot, t)
+        rot, t = se3.from_homogeneous(object_htm_wrt_robot)
+        self.object_pointcloud.transform(rot, t)
+
+        rot, t = se3.from_homogeneous(object_htm_wrt_robot)
+        self.object.setCurrentTransform(rot, t)
+
+        return object_htm_wrt_robot
+
+    def save_grasp(self, grasp: Grasp):
+        """
+        Save the grasp to a json file in the save_dir.
+        """
+        if not os.path.exists(self.save_dir):
+            os.mkdir(self.save_dir)
+
+        n_grasps = len(os.listdir(self.save_dir))
+
+        with open(f"{self.save_dir}/grasp{n_grasps}.json", "w") as f:
+            json.dump(grasp._asdict(), f)
+
+    def generate_grasp(self, visualise: bool = False) -> Grasp:
         self.object_rotation = R.random()
 
         points, normals = self.load_object(self.object_rotation)
@@ -118,73 +185,19 @@ class GraspGenerator:
             self.contact_points = [
                 ContactPoint(p, n, kFriction=0.1) for p, n in zip(points[grasp_point_idx], normals[grasp_point_idx])
             ]
-
             is_stable = self.analyse_grasp_stability()
-            print("is stable:", is_stable)
-
             if is_stable:
                 is_valid = self.solve_ik(points[grasp_point_idx])
 
-        # Now we want to transform this into the robot frame, the whole lot and visualise it as we go
-        object_rotation = self.object_rotation.as_matrix()
-        object_htm_wrt_world = np.array(
-            [
-                [
-                    object_rotation[0, 0],
-                    object_rotation[1, 0],
-                    object_rotation[2, 0],
-                    0,
-                ],
-                [
-                    object_rotation[0, 1],
-                    object_rotation[1, 1],
-                    object_rotation[2, 1],
-                    0,
-                ],
-                [
-                    object_rotation[0, 2],
-                    object_rotation[1, 2],
-                    object_rotation[2, 2],
-                    0,
-                ],
-                [0, 0, 0, 1],
-            ]
+        print("Found valid grasp")
+        object_htm_wrt_robot = self.transform_into_robot_space()
+        contact_points_array = np.array([cp.x for cp in self.contact_points])
+
+        grasp = Grasp(
+            contact_points=contact_points_array.tolist(),
+            grasp_config=self.grasp_config[6:],  # exclude the virtual arm
+            object_htm=object_htm_wrt_robot.tolist(),
         )
-
-        rot, t = self.robot.link(self.robot_config.base_link).getTransform()
-        rotation = np.array([rot[:3], rot[3:6], rot[6:]])
-        translation = np.array(t)
-        robot_htm_wrt_world = np.array(
-            [
-                [rotation[0, 0], rotation[1, 0], rotation[2, 0], translation[0]],
-                [rotation[0, 1], rotation[1, 1], rotation[2, 1], translation[1]],
-                [rotation[0, 2], rotation[1, 2], rotation[2, 2], translation[2]],
-                [0, 0, 0, 1],
-            ]
-        )
-        object_htm_wrt_robot = np.linalg.inv(robot_htm_wrt_world) @ object_htm_wrt_world
-
-        self.grasp_config[:6] = [0, 0, 0, 0, 0, 0]  # reset the virtual arm to identity
-        self.robot.setConfig(self.grasp_config)
-        self.robot.link("hand_base").setTransform([1, 0, 0, 0, 1, 0, 0, 0, 1], [0, 0, 0])
-
-        for i, point in enumerate(self.contact_points):
-            rot, t = se3.from_homogeneous(np.linalg.inv(object_htm_wrt_world))
-            point.transform((rot, t))
-            rot, t = se3.from_homogeneous(object_htm_wrt_robot)
-            point.transform((rot, t))
-
-        transformed_pc = []
-        for point in self.object_pointcloud.getPoints():
-            p = np.array([point[0], point[1], point[2], 1])
-            new_point = object_htm_wrt_robot @ (np.linalg.inv(object_htm_wrt_world) @ p)
-            transformed_pc.append(new_point[:3])
-        transformed_pc = np.array(transformed_pc)
-        self.object_pointcloud.setPoints(transformed_pc)
-
-        # self.object.setCurrentTransform(ORIGIN[0], ORIGIN[1])
-        rot, t = se3.from_homogeneous(object_htm_wrt_robot)
-        self.object.setCurrentTransform(rot, t)
 
         if self.visualise:
             vis.clear()
@@ -199,9 +212,10 @@ class GraspGenerator:
             vis.add("object", self.object)
             vis.add("robot", self.robot)
 
-        # optionally save the grasp
+        if self.save_dir is not None:
+            self.save_grasp(grasp)
 
-        # return the data
+        return grasp
 
     def _sample_mesh(self, object_rotation) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -212,6 +226,7 @@ class GraspGenerator:
 
         object_mesh = mesh.Mesh.from_file(self.stl_path)
         object_mesh.rotate(axis=object_rotation, theta=float(np.linalg.norm(object_rotation)))
+        # Include the all the vertices
         points = np.vstack(
             [
                 object_mesh.points[:, :3],

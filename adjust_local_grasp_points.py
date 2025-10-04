@@ -1,8 +1,8 @@
 from klampt import WorldModel
+from klampt.io import resource
 
 
 def main():
-    from klampt.io import resource
 
     world = WorldModel()
 
