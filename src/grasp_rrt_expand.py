@@ -46,9 +46,7 @@ def grasp_rrt_expand():
     clustering_data = []
     for i in range(num_grasps):
         # I know the paper says to use q,p but would grasp points + object pose work better?
-        grasp = np.hstack(
-            (joint_angles[i], np.array(object_transforms[i][0]).flatten())
-        )
+        grasp = np.hstack((joint_angles[i], np.array(object_transforms[i][0]).flatten()))
         clustering_data.append(grasp)
 
     # knn on (q,p)
@@ -62,9 +60,7 @@ def grasp_rrt_expand():
     for i, grasp_idx in enumerate(grasp_neighbours[:, 0]):
         other_grasp_idx = grasp_neighbours[i, 1]
         # midpoint_grasp = X[grasp_idx] - X[other_grasp_idx]
-        midpoint_joints = (
-            X[grasp_idx, :num_joints] + X[other_grasp_idx, :num_joints]
-        ) / 2
+        midpoint_joints = (X[grasp_idx, :num_joints] + X[other_grasp_idx, :num_joints]) / 2
 
         grasp_object_tf = np.array(object_transforms[grasp_idx][0])
         other_grasp_object_tf = np.array(object_transforms[other_grasp_idx][0])
@@ -92,9 +88,7 @@ def grasp_rrt_expand():
         #   find nearest point on mesh to midpoint
         #   do solve ik with that point and midpoint of q as init
         object_mesh_points, _ = sample_mesh(MESH_FILENAME, interp_object_rotation)
-        nbrs = NearestNeighbors(n_neighbors=1, algorithm="ball_tree").fit(
-            object_mesh_points[:, :3]
-        )
+        nbrs = NearestNeighbors(n_neighbors=1, algorithm="ball_tree").fit(object_mesh_points[:, :3])
         mesh_point_idx = nbrs.kneighbors(grasp_midpoints)[1]
         new_grasp_points = object_mesh_points[mesh_point_idx.flatten(), :3]
 

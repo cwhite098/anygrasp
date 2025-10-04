@@ -118,9 +118,7 @@ def transform_grasp(grasp_points, htm):
                 [0, 0, 0, 1],
             ]
         )"""
-        transformed_point = (
-            htm @ np.array([point[0], point[1], point[2], 1]).transpose()
-        )
+        transformed_point = htm @ np.array([point[0], point[1], point[2], 1]).transpose()
         transformed_points.append(transformed_point)
     return transformed_points
 
@@ -142,9 +140,7 @@ def main():
     # grasp_points_wrt_robot = project_points_into_robot_space(grasp_points, joint_angles)
     # plot_points(grasp_points_wrt_robot)
 
-    grasp_points_wrt_object = project_points_into_object_space(
-        grasp_points, object_transforms
-    )
+    grasp_points_wrt_object = project_points_into_object_space(grasp_points, object_transforms)
     plot_points(grasp_points_wrt_object)
 
 

@@ -43,9 +43,7 @@ class DexeeConfig:
 
     def _get_fingertip_links(self, robot):
         # This will work for dexee and hande but maybe not for other hands
-        self.fingertip_links: list[str] = [
-            link.name for link in robot.links if "tip" in link.name
-        ]
+        self.fingertip_links: list[str] = [link.name for link in robot.links if "tip" in link.name]
         assert len(self.fingertip_links) == self.num_fingers
 
 

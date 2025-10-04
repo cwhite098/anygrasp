@@ -35,12 +35,8 @@ def main():
         required=True,
     )
     parser.add_argument("--visualise", action="store_true", help="visualise the grasps")
-    parser.add_argument(
-        "--n_grasps", type=int, default=1, help="number of grasps to generate"
-    )
-    parser.add_argument(
-        "--n_procs", type=int, default=1, help="number of processes to use"
-    )
+    parser.add_argument("--n_grasps", type=int, default=1, help="number of grasps to generate")
+    parser.add_argument("--n_procs", type=int, default=1, help="number of processes to use")
     args = parser.parse_args()
 
     # Generate grasps in multi proc manner

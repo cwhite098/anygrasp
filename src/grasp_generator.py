@@ -73,9 +73,7 @@ class GraspGenerator:
 
     def solve_ik(self, grasp_points_wrt_world):
 
-        for link_perm in permutations(
-            self.robot_config.fingertip_links, self.num_grasp_points
-        ):
+        for link_perm in permutations(self.robot_config.fingertip_links, self.num_grasp_points):
             ik_objectives = []
             for i, fingertip in enumerate(link_perm):
                 ik_objectives.append(
@@ -116,12 +114,9 @@ class GraspGenerator:
         is_valid = False
         print("=================")
         while not is_valid:
-            grasp_point_idx = np.random.randint(
-                0, points.shape[0], self.robot_config.num_fingers
-            )
+            grasp_point_idx = np.random.randint(0, points.shape[0], self.robot_config.num_fingers)
             self.contact_points = [
-                ContactPoint(p, n, kFriction=0.1)
-                for p, n in zip(points[grasp_point_idx], normals[grasp_point_idx])
+                ContactPoint(p, n, kFriction=0.1) for p, n in zip(points[grasp_point_idx], normals[grasp_point_idx])
             ]
 
             is_stable = self.analyse_grasp_stability()
@@ -171,9 +166,7 @@ class GraspGenerator:
 
         self.grasp_config[:6] = [0, 0, 0, 0, 0, 0]  # reset the virtual arm to identity
         self.robot.setConfig(self.grasp_config)
-        self.robot.link("hand_base").setTransform(
-            [1, 0, 0, 0, 1, 0, 0, 0, 1], [0, 0, 0]
-        )
+        self.robot.link("hand_base").setTransform([1, 0, 0, 0, 1, 0, 0, 0, 1], [0, 0, 0])
 
         for i, point in enumerate(self.contact_points):
             rot, t = se3.from_homogeneous(np.linalg.inv(object_htm_wrt_world))
@@ -218,9 +211,7 @@ class GraspGenerator:
         object_rotation = object_rotation.as_rotvec()
 
         object_mesh = mesh.Mesh.from_file(self.stl_path)
-        object_mesh.rotate(
-            axis=object_rotation, theta=float(np.linalg.norm(object_rotation))
-        )
+        object_mesh.rotate(axis=object_rotation, theta=float(np.linalg.norm(object_rotation)))
         points = np.vstack(
             [
                 object_mesh.points[:, :3],
