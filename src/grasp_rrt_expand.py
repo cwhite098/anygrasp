@@ -10,12 +10,51 @@ from sklearn.neighbors import NearestNeighbors
 from scipy.spatial.transform import Slerp
 from klampt.model import ik
 
-from src.plots import load_data
+from plots import load_data
 from src.robot_config import DexeeConfig
 
 
 MESH_FILENAME = "can.stl"
 GRASP_FORCE_TOLERANCE = 0.1
+
+# TODO: THIS WHOLE THING NEEDS ANOTHER LOOK
+
+
+class GraspDatasetExpander:
+
+    def __init__(self):
+        # Load dataset
+
+        # Construct (q,p)
+
+        # Load the mesh
+
+        # Init my KNN thingy
+        pass
+
+    def interpolate_grasp_dataset(self, n_new_grasps):
+        # Expand the dataset by interpolating between existing grasps
+        pass
+
+    def grasp_rrt_expand(self):
+        # Expand the dataset by extrapolating along stable manifolds in the grasp space
+        raise NotImplementedError
+
+    def _get_grasp_points_on_mesh(self, grasp_points, object_transform):
+        # Given a set of grasp points and an object transform, find the nearest points on the mesh
+        pass
+
+    def _find_midpoint_transform(self, htm1, htm2) -> np.ndarray:
+        # Find the midpoint transform between two homogeneous transformation matrices
+        pass
+
+    def _interpolate_rotations(self, rot1, rot2) -> np.ndarray:
+        # Use slerp to interpolate between two rotation matrices
+        pass
+
+    def _solve_ik(self, grasp_points):
+        # Solve the IK for a given set of grasp points
+        pass
 
 
 def save_grasp_data(grasp_data):
@@ -111,16 +150,6 @@ def grasp_rrt_expand():
             return not robot.selfCollides() and not collision_detected
 
         robot.setConfig(midpoint_joints)
-
-        ##############
-        #
-        # I think using the midpoint joints here is wrong
-        # because of the robot transform being included. Probs should have same as
-        # the initial point?
-        # Probs need to rethink the whole robot transform thing -> maybe transform all grasps to be in robot space
-        # and then random rotation for policy training
-        #
-        #############
 
         success = ik.solve_global(
             ik_objectives,

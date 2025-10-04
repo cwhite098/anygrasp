@@ -7,7 +7,7 @@ from multiprocessing import Process, Lock, cpu_count
 import numpy as np
 
 from src.grasp_generator import GraspGenerator
-from src.robot_config import DexeeConfig
+from src.robot_config import DexeeConfig, ShadowHandConfig
 
 
 def run(lock, mesh_path, visualise, n_grasps):

@@ -1,18 +1,20 @@
 from klampt import WorldModel
 from klampt.io import resource
 
+from src.robot_config import ShadowHandConfig
+
 
 def main():
 
     world = WorldModel()
 
-    ROBOT_URDF_FILE = "dexee/dexee.urdf"
+    robot_config = ShadowHandConfig()
 
-    world.loadElement(ROBOT_URDF_FILE)
+    world.loadElement(robot_config.urdf_path)
 
     robot = world.robot(0)
 
-    link = robot.link("F2_tip")
+    link = robot.link("lftip")
 
     (save, value) = resource.edit("Local point", [0, 0, 0], type="Point", world=world, frame=link)
     if save:

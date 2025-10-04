@@ -14,7 +14,7 @@ from klampt.math import se3
 from klampt.model.contact import ContactPoint, force_closure
 
 from vis_grasp import ORIGIN
-from src.robot_config import DexeeConfig
+from src.robot_config import RobotConfig
 
 
 def klampt_transform_to_htm(rot: list[float], t: list[float]) -> np.ndarray:
@@ -39,19 +39,20 @@ class Grasp(NamedTuple):
     contact_points: list[list[float]]
     grasp_config: list[float]
     object_htm: list[list[float]]
+    fingertip_assigment: list[str]
 
 
 class GraspGenerator:
     def __init__(
         self,
-        robot_config: DexeeConfig,
+        robot_config: RobotConfig,
         stl_path: str,
         num_grasp_points: int,
         grasp_force_tolerance: float = 0.1,
         visualise: bool = False,
         save_dir: str | None = None,
     ):
-        self.robot_config: DexeeConfig = robot_config
+        self.robot_config: RobotConfig = robot_config
         self.stl_path = stl_path
         self.grasp_force_tolerance = grasp_force_tolerance
         self.num_grasp_points = num_grasp_points
@@ -125,8 +126,8 @@ class GraspGenerator:
             )
             if success:
                 self.grasp_config = self.robot.getConfig()
-                return True
-        return False
+                return True, link_perm
+        return False, link_perm
 
     def transform_into_robot_space(self) -> np.ndarray:
         """
@@ -142,7 +143,7 @@ class GraspGenerator:
 
         self.grasp_config[:6] = [0, 0, 0, 0, 0, 0]  # reset the virtual arm (hand base -> origin)
         self.robot.setConfig(self.grasp_config)
-        self.robot.link("hand_base").setTransform(ORIGIN[0], ORIGIN[1])
+        self.robot.link(self.robot_config.base_link).setTransform(ORIGIN[0], ORIGIN[1])
 
         # Transform the contact points and object pointcloud into robot space
         for i, point in enumerate(self.contact_points):
@@ -181,13 +182,13 @@ class GraspGenerator:
         is_valid = False
         print("=================")
         while not is_valid:
-            grasp_point_idx = np.random.randint(0, points.shape[0], self.robot_config.num_fingers)
+            grasp_point_idx = np.random.randint(0, points.shape[0], self.num_grasp_points)
             self.contact_points = [
                 ContactPoint(p, n, kFriction=0.1) for p, n in zip(points[grasp_point_idx], normals[grasp_point_idx])
             ]
             is_stable = self.analyse_grasp_stability()
             if is_stable:
-                is_valid = self.solve_ik(points[grasp_point_idx])
+                is_valid, link_perm = self.solve_ik(points[grasp_point_idx])
 
         print("Found valid grasp")
         object_htm_wrt_robot = self.transform_into_robot_space()
@@ -197,6 +198,7 @@ class GraspGenerator:
             contact_points=contact_points_array.tolist(),
             grasp_config=self.grasp_config[6:],  # exclude the virtual arm
             object_htm=object_htm_wrt_robot.tolist(),
+            fingertip_assigment=link_perm,
         )
 
         if self.visualise:
@@ -208,6 +210,7 @@ class GraspGenerator:
             vis.add("robot", self.robot)
             vis.add("origin", ORIGIN)
             time.sleep(1)
+            vis.run()
             vis.clear()
             vis.add("object", self.object)
             vis.add("robot", self.robot)
