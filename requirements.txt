@@ -1,0 +1,6 @@
+Klampt
+numpy
+numpy-stl
+PyOpenGL
+PyQt6
+scipy
