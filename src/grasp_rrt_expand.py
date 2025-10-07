@@ -14,6 +14,7 @@ from klampt.math import se3
 
 from plots import load_data
 from src.robot_config import DexeeConfig
+from src.grasp_generator import Grasp
 
 
 MESH_FILENAME = "can.stl"
@@ -46,6 +47,11 @@ class GraspDatasetExpander:
         self.object.loadFile(mesh_filename)
         self.robot = self.world.robot(0)
 
+        self.object_ghost = primitives.Geometry3D()
+        self.object_ghost.loadFile(mesh_filename)
+        self.world.loadElement(self.robot_config.urdf_path)
+        self.robot_ghost = self.world.robot(1)
+
     def interpolate_grasp_dataset(self, n_new_grasps, visualise: bool = False):
         # Expand the dataset by interpolating between existing grasps
 
@@ -54,14 +60,14 @@ class GraspDatasetExpander:
 
         # interpolate to NN
         grasps_generated = 0
-        i = 0
-        while grasps_generated < n_new_grasps and i < len(grasp_neighbours):
+        while grasps_generated < n_new_grasps:
 
             # maybe I load the data here and continuously add to it
             # and keep the while loop running until I have enough new grasps
+            # also sample grasps randomly
 
-            grasp_idx = i
-            other_grasp_idx = grasp_neighbours[i, 1]
+            grasp_idx = np.random.randint(0, self.grasp_points.shape[0])
+            other_grasp_idx = grasp_neighbours[grasp_idx, 1]
 
             # JOINT MIDPOINT
             midpoint_joints = (self.joint_angles[grasp_idx] + self.joint_angles[other_grasp_idx]) / 2
@@ -73,24 +79,31 @@ class GraspDatasetExpander:
 
             # GRASP POINT MIDPOINTS
             new_grasp_points = self._get_grasp_points_on_mesh(
-                self.grasp_points[grasp_idx], self.finger_assignments[grasp_idx],
-                self.grasp_points[other_grasp_idx], self.finger_assignments[other_grasp_idx],
-                interp_htm
+                self.grasp_points[grasp_idx],
+                self.finger_assignments[grasp_idx],
+                self.grasp_points[other_grasp_idx],
+                self.finger_assignments[other_grasp_idx],
+                interp_htm,
             )
 
             self.object.setCurrentTransform(se3.from_homogeneous(interp_htm)[0], se3.from_homogeneous(interp_htm)[1])
-            self.robot.setConfig(np.concat(([0, 0, 0, 0, 0, 0], midpoint_joints)).tolist())
-            # Visualise first grasp, second grasp, and midpoint grasp
-            if visualise:
-                self._visualise_interpolation()
-
+            self.robot.setConfig(np.concat(([0, 0, 0, 0, 0, 0], self.joint_angles[grasp_idx])).tolist())
             valid_grasp = self._solve_ik(grasp_idx, new_grasp_points, midpoint_joints)
 
             if valid_grasp:
                 grasps_generated += 1
-                # save grasp
-                pass
-            i+1
+
+                robot_config = self.robot.getConfig()[6:]  # exclude virtual arm
+
+                grasp = Grasp(
+                    contact_points=new_grasp_points.tolist(),
+                    grasp_config=robot_config,
+                    object_htm=interp_htm.tolist(),
+                    fingertip_assigment=self.finger_assignments[grasp_idx],
+                )
+                self.save_grasp_data(self.save_dir, grasp._asdict())
+                if visualise:
+                    self._visualise_interpolation(grasp_idx)
 
     def grasp_rrt_expand(self):
         # Expand the dataset by extrapolating along stable manifolds in the grasp space
@@ -139,7 +152,6 @@ class GraspDatasetExpander:
                     self.robot.link(fingertip),
                     local=self.robot_config.fingertip_grasp_offset,
                     world=new_grasp_points[i],
-
                 )
             )
 
@@ -156,7 +168,7 @@ class GraspDatasetExpander:
             numRestarts=1000,
             iters=300,
             feasibilityCheck=feasible,
-            activeDofs=range(6, self.robot_config.num_joints)
+            activeDofs=range(6, self.robot_config.num_joints),
         )
         return success
 
@@ -180,18 +192,27 @@ class GraspDatasetExpander:
 
         return points, normals
 
-    def _visualise_interpolation(self):
+    def _visualise_interpolation(self, grasp_idx):
+        self.object_ghost.setCurrentTransform(
+            se3.from_homogeneous(self.object_htms[grasp_idx])[0],
+            se3.from_homogeneous(self.object_htms[grasp_idx])[1],
+        )
+        self.robot_ghost.setConfig(np.concat(([0, 0, 0, 0, 0, 0], self.joint_angles[grasp_idx])).tolist())
         vis.clear()
         vis.add("object", self.object)
+        vis.add("object_ghost", self.object_ghost, color=[0, 1, 0, 0.5])
         vis.add("robot", self.robot)
+        vis.add("robot_ghost", self.robot_ghost, color=[0, 1, 0, 0.5])
         vis.add("origin", np.eye(4))
+        vis.autoFitCamera()
         vis.run()
 
-def save_grasp_data(grasp_data):
-    if not os.path.exists("grasps/"):
-        os.mkdir("grasps")
+    @staticmethod
+    def save_grasp_data(grasp_dir, grasp_data):
+        if not os.path.exists(grasp_dir):
+            os.mkdir(grasp_dir)
 
-    n_grasps = len(os.listdir("grasps"))
+        n_grasps = len(os.listdir(grasp_dir))
 
-    with open(f"grasps/grasp{n_grasps}.json", "w") as f:
-        json.dump(grasp_data, f)
+        with open(f"{grasp_dir}/int_grasp{n_grasps}.json", "w") as f:
+            json.dump(grasp_data, f)
