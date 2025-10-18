@@ -1,20 +1,20 @@
 from klampt import WorldModel
 from klampt.io import resource
 
-from src.robot_config import ShadowHandConfig
+from src.robot_config import ShadowHandConfig, AllegroConfig
 
 
 def main():
 
     world = WorldModel()
 
-    robot_config = ShadowHandConfig()
+    robot_config = AllegroConfig()
 
     world.loadElement(robot_config.urdf_path)
 
     robot = world.robot(0)
 
-    link = robot.link("lftip")
+    link = robot.link("link_11.0_tip")
 
     (save, value) = resource.edit("Local point", [0, 0, 0], type="Point", world=world, frame=link)
     if save:

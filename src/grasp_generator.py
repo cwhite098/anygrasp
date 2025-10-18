@@ -1,8 +1,5 @@
 from itertools import permutations
-from typing import NamedTuple
 import time
-import os
-import json
 
 from scipy.spatial.transform import Rotation as R
 import numpy as np
@@ -15,6 +12,7 @@ from klampt.model.contact import ContactPoint, force_closure
 
 from vis_grasp import ORIGIN
 from src.robot_config import RobotConfig
+from src.dataset import GraspDataset, Grasp
 
 
 def klampt_transform_to_htm(rot: list[float], t: list[float]) -> np.ndarray:
@@ -33,13 +31,6 @@ def klampt_transform_to_htm(rot: list[float], t: list[float]) -> np.ndarray:
         ]
     )
     return htm
-
-
-class Grasp(NamedTuple):
-    contact_points: list[list[float]]
-    grasp_config: list[float]
-    object_htm: list[list[float]]
-    fingertip_assigment: list[str]
 
 
 class GraspGenerator:
@@ -160,18 +151,6 @@ class GraspGenerator:
 
         return object_htm_wrt_robot
 
-    def save_grasp(self, grasp: Grasp):
-        """
-        Save the grasp to a json file in the save_dir.
-        """
-        if not os.path.exists(self.save_dir):
-            os.mkdir(self.save_dir)
-
-        n_grasps = len(os.listdir(self.save_dir))
-
-        with open(f"{self.save_dir}/grasp{n_grasps}.json", "w") as f:
-            json.dump(grasp._asdict(), f)
-
     def generate_grasp(self, visualise: bool = False) -> Grasp:
         self.object_rotation = R.random()
 
@@ -195,10 +174,12 @@ class GraspGenerator:
         contact_points_array = np.array([cp.x for cp in self.contact_points])
 
         grasp = Grasp(
+            robot_name=self.robot_config.name,
+            object_name=self.stl_path,
             contact_points=contact_points_array.tolist(),
-            grasp_config=self.grasp_config[6:],  # exclude the virtual arm
+            joint_angles=self.grasp_config[6:],  # exclude the virtual arm
             object_htm=object_htm_wrt_robot.tolist(),
-            fingertip_assigment=link_perm,
+            fingertip_assignment=link_perm,
         )
 
         if self.visualise:
@@ -216,7 +197,7 @@ class GraspGenerator:
             vis.add("robot", self.robot)
 
         if self.save_dir is not None:
-            self.save_grasp(grasp)
+            GraspDataset.save_grasp(grasp, self.save_dir)
 
         return grasp
 

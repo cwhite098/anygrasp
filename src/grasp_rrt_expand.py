@@ -1,6 +1,5 @@
 import os
 import json
-import time
 
 import numpy as np
 from stl import mesh
@@ -15,10 +14,6 @@ from klampt.math import se3
 from plots import load_data
 from src.robot_config import DexeeConfig
 from src.grasp_generator import Grasp
-
-
-MESH_FILENAME = "can.stl"
-GRASP_FORCE_TOLERANCE = 0.1
 
 
 class GraspDatasetExpander:
@@ -62,9 +57,7 @@ class GraspDatasetExpander:
         grasps_generated = 0
         while grasps_generated < n_new_grasps:
 
-            # maybe I load the data here and continuously add to it
-            # and keep the while loop running until I have enough new grasps
-            # also sample grasps randomly
+            # TODO: integrate with the new grasp dataset
 
             grasp_idx = np.random.randint(0, self.grasp_points.shape[0])
             other_grasp_idx = grasp_neighbours[grasp_idx, 1]
@@ -106,7 +99,6 @@ class GraspDatasetExpander:
                     self._visualise_interpolation(grasp_idx)
 
     def grasp_rrt_expand(self):
-        # Expand the dataset by extrapolating along stable manifolds in the grasp space
         raise NotImplementedError
 
     def _get_grasp_points_on_mesh(self, grasp_point1, fingers1, grasp_point2, fingers2, object_htm):

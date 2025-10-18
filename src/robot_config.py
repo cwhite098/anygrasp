@@ -25,7 +25,7 @@ class RobotConfig:
 
     def _verify_base_link_transform(self, robot):
         """
-        We want to ensure that the base link transform wrt is the identity.
+        We want to ensure that the base link transform wrt the origin is the identity.
         This will save pain later when we try and load grasps with the grasp points wrt the world frame.
         """
         world = WorldModel()
@@ -42,7 +42,7 @@ class RobotConfig:
         self.num_joints: int = len(robot.getConfig())
 
     def _get_fingertip_links(self, robot):
-        # This will work for dexee and hande but maybe not for other hands
+        # TODO: might not work for all hands
         self.fingertip_links: list[str] = [link.name for link in robot.links if "tip" in link.name]
         assert len(self.fingertip_links) == self.num_fingers
 
@@ -69,6 +69,17 @@ class ShadowHandConfig(RobotConfig):
     base_link: str = "forearm"  # link after the virtual arm
 
     fingertip_grasp_offset: list[float] = field(default_factory=lambda: [0.0, -0.007938491873549683, 0.0])
+
+
+@dataclass
+class AllegroConfig(RobotConfig):
+
+    name: str = "allegro"
+    num_fingers: int = 4
+    urdf_path: str = "allegro/allegro_hand_description_right.urdf"
+    base_link: str = "base_link"
+
+    fingertip_grasp_offset: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.013])
 
 
 def main():

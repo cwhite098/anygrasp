@@ -7,7 +7,7 @@ from multiprocessing import Process, Lock, cpu_count
 import numpy as np
 
 from src.grasp_generator import GraspGenerator
-from src.robot_config import DexeeConfig, ShadowHandConfig
+from src.robot_config import DexeeConfig, ShadowHandConfig, AllegroConfig
 
 
 def run(lock, mesh_path, visualise, n_grasps):
@@ -15,7 +15,11 @@ def run(lock, mesh_path, visualise, n_grasps):
     np.random.seed((os.getpid() * int(time.time())) % 123456789)
 
     generator = GraspGenerator(
-        robot_config=DexeeConfig(), stl_path=mesh_path, num_grasp_points=3, visualise=visualise, save_dir="grasps"
+        robot_config=DexeeConfig(),
+        stl_path=mesh_path,
+        num_grasp_points=3,
+        visualise=visualise,
+        save_dir="grasps",
     )
     for _ in range(n_grasps):
         grasp = generator.generate_grasp(True)
