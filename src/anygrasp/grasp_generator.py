@@ -1,6 +1,5 @@
 from itertools import permutations
 import time
-from multiprocessing import Lock
 
 from scipy.spatial.transform import Rotation as R
 import numpy as np
@@ -11,8 +10,7 @@ from klampt.model.create import primitives
 from klampt.math import se3
 from klampt.model.contact import ContactPoint, force_closure
 
-from vis_grasp import ORIGIN
-from src.anygrasp.robot_config import RobotConfig
+from src.anygrasp.robot_config import RobotConfig, ORIGIN
 from src.anygrasp.dataset import GraspDataset, Grasp
 
 

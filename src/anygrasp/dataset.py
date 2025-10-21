@@ -36,6 +36,10 @@ class GraspDataset:
 
         self.num_grasps = len(self.grasps)
 
+        # Initialise array for vectorised sampling
+        self.joint_angles_array = np.array([grasp.joint_angles for grasp in self.grasps])
+        self.object_htms_array = np.array([grasp.object_htm for grasp in self.grasps])
+
     @staticmethod
     def load_data(grasp_dir: str = "grasps") -> list[Grasp]:
         # Tidy up grasp dir
@@ -82,6 +86,7 @@ class GraspDataset:
             return self.grasps[idx]
         
         # random sample from k nn's of point idx in set
+        # TODO: vectorised NN sampling
         elif mode == self.SamepleMode.KNN:
             assert k > 0 and k < len(self.grasps) and isinstance(k, int)
             assert idx is not None
@@ -96,12 +101,17 @@ class GraspDataset:
         else:
             raise ValueError("its an enum, how ?")
 
-    # nearest neighbours
     def _knn(self, k):
         """Returns indices of k nearest neighbours of each grasp in the dataset."""
         grasp_knn = NearestNeighbors(n_neighbors=k, algorithm="ball_tree").fit(self.grasp_embeddings)
         grasp_neighbours = grasp_knn.kneighbors(self.grasp_embeddings)[1]  # 0 is the distances
         return grasp_neighbours
     
-    # def some properties to get the data from arrays (faster + vectorised)
+    @property
+    def joint_angles(self, sample_indices: list[int]):
+        return self.joint_angles_array[sample_indices]
+    
+    @property
+    def object_htms(self, sample_indices: list[int]):
+        return self.object_htms_array[sample_indices]
 

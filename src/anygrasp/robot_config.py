@@ -2,8 +2,7 @@ from dataclasses import dataclass, field
 
 from klampt import WorldModel
 
-from vis_grasp import ORIGIN
-
+ORIGIN = [[1, 0, 0, 0, 1, 0, 0, 0, 1], [0, 0, 0]]
 
 @dataclass
 class RobotConfig:

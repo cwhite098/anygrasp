@@ -4,10 +4,8 @@ from sklearn.decomposition import PCA
 
 from klampt import WorldModel
 from klampt import vis
-import numpy as np
 
-from vis_grasp import ORIGIN
-from src.anygrasp.robot_config import DexeeConfig
+from src.anygrasp.robot_config import DexeeConfig, ORIGIN
 from src.anygrasp.dataset import GraspDataset, Grasp
 
 
