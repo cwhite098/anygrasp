@@ -34,11 +34,13 @@ class GraspDataset:
             grasp = np.hstack((self.grasps[i].joint_angles, np.array(self.grasps[i].object_htm[0]).flatten()))
             self.grasp_embeddings.append(grasp)
 
+        self.num_grasps = len(self.grasps)
+
     @staticmethod
     def load_data(grasp_dir: str = "grasps") -> list[Grasp]:
         # Tidy up grasp dir
-        for i, grasp in enumerate(os.listdir(grasp_dir)):
-            os.rename(f"{grasp_dir}/{grasp}", f"{grasp_dir}/grasp{i}.json")
+        """for i, grasp in enumerate(os.listdir(grasp_dir)):
+            os.rename(f"{grasp_dir}/{grasp}", f"{grasp_dir}/grasp{i}.json")"""
 
         grasps = []
         for file in os.listdir(grasp_dir):
@@ -100,4 +102,6 @@ class GraspDataset:
         grasp_knn = NearestNeighbors(n_neighbors=k, algorithm="ball_tree").fit(self.grasp_embeddings)
         grasp_neighbours = grasp_knn.kneighbors(self.grasp_embeddings)[1]  # 0 is the distances
         return grasp_neighbours
+    
+    # def some properties to get the data from arrays (faster + vectorised)
 

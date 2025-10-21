@@ -1,5 +1,4 @@
-import os
-import json
+import time
 
 import numpy as np
 from stl import mesh
@@ -11,9 +10,8 @@ from scipy.spatial.transform import Slerp
 from klampt.model import ik
 from klampt.math import se3
 
-from plots import load_data
-from src.robot_config import DexeeConfig
-from src.grasp_generator import Grasp
+from src.anygrasp.robot_config import DexeeConfig
+from src.anygrasp.dataset import GraspDataset, Grasp
 
 
 class GraspDatasetExpander:
@@ -23,9 +21,14 @@ class GraspDatasetExpander:
         self.save_dir = save_dir
 
         # Load dataset
-        self.grasp_points, self.joint_angles, self.object_htms, self.finger_assignments = load_data(grasp_dir)
+        grasps: list[Grasp] = GraspDataset.load_data(grasp_dir)
 
-        num_grasps = self.grasp_points.shape[0]
+        self.grasp_points = np.array([g.contact_points for g in grasps])
+        self.joint_angles = np.array([g.joint_angles for g in grasps])
+        self.object_htms = np.array([g.object_htm for g in grasps])
+        self.finger_assignments = [g.fingertip_assignment for g in grasps]
+
+        num_grasps = len(grasps)
 
         # Construct (q,p)
         self.grasp_embeddings = []
@@ -80,6 +83,16 @@ class GraspDatasetExpander:
             )
 
             self.object.setCurrentTransform(se3.from_homogeneous(interp_htm)[0], se3.from_homogeneous(interp_htm)[1])
+
+            # TODO: readd 0s for each of the fixed joints
+            excluded_dofs = []
+            for i in range(self.robot_config.num_joints):
+                if self.robot.getJointType(i) == "weld":
+                    excluded_dofs.append(i)
+            # below is a copilot job, idk if its gonna work
+            joint_angles = np.insert(self.grasp_config, excluded_dofs, 0).tolist()[6:]  # exclude the virtual arm
+
+
             self.robot.setConfig(np.concat(([0, 0, 0, 0, 0, 0], self.joint_angles[grasp_idx])).tolist())
             valid_grasp = self._solve_ik(grasp_idx, new_grasp_points, midpoint_joints)
 
@@ -89,12 +102,15 @@ class GraspDatasetExpander:
                 robot_config = self.robot.getConfig()[6:]  # exclude virtual arm
 
                 grasp = Grasp(
+                    robot_name=self.robot_config.name,
+                    object_name=self.mesh_path,
                     contact_points=new_grasp_points.tolist(),
-                    grasp_config=robot_config,
+                    joint_angles=robot_config,
                     object_htm=interp_htm.tolist(),
-                    fingertip_assigment=self.finger_assignments[grasp_idx],
+                    fingertip_assignment=self.finger_assignments[grasp_idx],
                 )
-                self.save_grasp_data(self.save_dir, grasp._asdict())
+                print(f"Saving grasp no. {grasps_generated}")
+                GraspDataset.save_grasp(grasp, self.save_dir)
                 if visualise:
                     self._visualise_interpolation(grasp_idx)
 
@@ -197,14 +213,5 @@ class GraspDatasetExpander:
         vis.add("robot_ghost", self.robot_ghost, color=[0, 1, 0, 0.5])
         vis.add("origin", np.eye(4))
         vis.autoFitCamera()
-        vis.run()
-
-    @staticmethod
-    def save_grasp_data(grasp_dir, grasp_data):
-        if not os.path.exists(grasp_dir):
-            os.mkdir(grasp_dir)
-
-        n_grasps = len(os.listdir(grasp_dir))
-
-        with open(f"{grasp_dir}/int_grasp{n_grasps}.json", "w") as f:
-            json.dump(grasp_data, f)
+        vis.show()
+        time.sleep(0.2)

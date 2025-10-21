@@ -7,8 +7,8 @@ from klampt import vis
 import numpy as np
 
 from vis_grasp import ORIGIN
-from src.robot_config import DexeeConfig
-from src.dataset import GraspDataset, Grasp
+from src.anygrasp.robot_config import DexeeConfig
+from src.anygrasp.dataset import GraspDataset, Grasp
 
 
 
@@ -18,7 +18,7 @@ def plot_points(grasps: list[Grasp], robot):
     vis.add("Origin", ORIGIN)
     for i, grasp in enumerate(grasps):
         for j, point in enumerate(grasp.contact_points):
-            vis.add(f"grasp {i} point {j}", point)
+            vis.add(f"grasp {i} point {j}", point, hide_label=True, color=[0, 1, 0, 1])
 
     if robot is not None:
         vis.add("robot", robot, color=[1, 0.8, 0.8, 0.5])
@@ -39,11 +39,6 @@ def do_pca(data, num_components):
 
 
 def main():
-
-    # Clean up the grasp data directory
-    for i, grasp in enumerate(os.listdir("grasps")):
-        os.rename(f"grasps/{grasp}", f"grasps/grasp{i}.json")
-
     grasps = GraspDataset.load_data()
     grasp_dataset = GraspDataset("grasps")
     world = WorldModel()

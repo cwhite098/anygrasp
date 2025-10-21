@@ -1,5 +1,6 @@
 from itertools import permutations
 import time
+from multiprocessing import Lock
 
 from scipy.spatial.transform import Rotation as R
 import numpy as np
@@ -11,8 +12,8 @@ from klampt.math import se3
 from klampt.model.contact import ContactPoint, force_closure
 
 from vis_grasp import ORIGIN
-from src.robot_config import RobotConfig
-from src.dataset import GraspDataset, Grasp
+from src.anygrasp.robot_config import RobotConfig
+from src.anygrasp.dataset import GraspDataset, Grasp
 
 
 def klampt_transform_to_htm(rot: list[float], t: list[float]) -> np.ndarray:
@@ -151,7 +152,7 @@ class GraspGenerator:
 
         return object_htm_wrt_robot
 
-    def generate_grasp(self, visualise: bool = False) -> Grasp:
+    def generate_grasp(self, visualise: bool = False, lock = None) -> Grasp:
         self.object_rotation = R.random()
 
         points, normals = self.load_object(self.object_rotation)
@@ -173,11 +174,18 @@ class GraspGenerator:
         object_htm_wrt_robot = self.transform_into_robot_space()
         contact_points_array = np.array([cp.x for cp in self.contact_points])
 
+        # Remove the fixed joints from the grasp config
+        excluded_dofs = []
+        for i in range(self.robot_config.num_joints):
+            if self.robot.getJointType(i) == "weld":
+                excluded_dofs.append(i)
+        joint_angles = np.delete(self.grasp_config, excluded_dofs).tolist()[6:] # exclude the virtual arm
+
         grasp = Grasp(
             robot_name=self.robot_config.name,
             object_name=self.stl_path,
             contact_points=contact_points_array.tolist(),
-            joint_angles=self.grasp_config[6:],  # exclude the virtual arm
+            joint_angles=joint_angles,
             object_htm=object_htm_wrt_robot.tolist(),
             fingertip_assignment=link_perm,
         )
@@ -191,13 +199,17 @@ class GraspGenerator:
             vis.add("robot", self.robot)
             vis.add("origin", ORIGIN)
             time.sleep(1)
-            vis.run()
+            vis.show()
             vis.clear()
             vis.add("object", self.object)
             vis.add("robot", self.robot)
 
+        if lock is not None:
+            lock.acquire()
         if self.save_dir is not None:
             GraspDataset.save_grasp(grasp, self.save_dir)
+        if lock is not None:
+            lock.release()
 
         return grasp
 

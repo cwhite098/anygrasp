@@ -1,0 +1,19 @@
+Metadata-Version: 2.4
+Name: anygrasp
+Version: 0.0.1
+Summary: Grasp generation
+Author-email: Chris White <chris@shadowrobot.com>
+License-Expression: MIT
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# anygrasp
+
+```
+python generate_grasps.py --mesh <path_to_stl> --visualise
+```
+to generate some grasps. Use `--n_grasps` to generate more than 1.

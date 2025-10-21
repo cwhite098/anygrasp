@@ -6,8 +6,8 @@ from multiprocessing import Process, Lock, cpu_count
 
 import numpy as np
 
-from src.grasp_generator import GraspGenerator
-from src.robot_config import DexeeConfig, ShadowHandConfig, AllegroConfig
+from src.anygrasp.grasp_generator import GraspGenerator
+from src.anygrasp.robot_config import DexeeConfig, ShadowHandConfig, AllegroConfig
 
 
 def run(lock, mesh_path, visualise, n_grasps):
