@@ -42,10 +42,6 @@ class GraspDataset:
 
     @staticmethod
     def load_data(grasp_dir: str = "grasps") -> list[Grasp]:
-        # Tidy up grasp dir
-        """for i, grasp in enumerate(os.listdir(grasp_dir)):
-            os.rename(f"{grasp_dir}/{grasp}", f"{grasp_dir}/grasp{i}.json")"""
-
         grasps = []
         for file in os.listdir(grasp_dir):
             with open(f"{grasp_dir}/{file}") as f:
@@ -108,10 +104,10 @@ class GraspDataset:
         return grasp_neighbours
     
     @property
-    def joint_angles(self, sample_indices: list[int]):
-        return self.joint_angles_array[sample_indices]
+    def joint_angles(self):
+        return self.joint_angles_array
     
     @property
-    def object_htms(self, sample_indices: list[int]):
-        return self.object_htms_array[sample_indices]
+    def object_htms(self):
+        return self.object_htms_array
 
