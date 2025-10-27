@@ -162,7 +162,7 @@ class GraspGenerator:
         while not is_valid:
             grasp_point_idx = np.random.randint(0, points.shape[0], self.num_grasp_points)
             self.contact_points = [
-                ContactPoint(p, n, kFriction=0.1) for p, n in zip(points[grasp_point_idx], normals[grasp_point_idx])
+                ContactPoint(p, n, kFriction=0.005) for p, n in zip(points[grasp_point_idx], normals[grasp_point_idx])
             ]
             is_stable = self.analyse_grasp_stability()
             if is_stable:
@@ -175,7 +175,7 @@ class GraspGenerator:
         # Remove the fixed joints from the grasp config
         excluded_dofs = []
         for i in range(self.robot_config.num_joints):
-            if self.robot.getJointType(i) == "weld":
+            if self.robot.getJointType(i) in ["weld"]:
                 excluded_dofs.append(i)
         joint_angles = np.delete(self.grasp_config, excluded_dofs).tolist()[6:] # exclude the virtual arm
 

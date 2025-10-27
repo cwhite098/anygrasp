@@ -42,8 +42,9 @@ class RobotConfig:
 
     def _get_fingertip_links(self, robot):
         # TODO: might not work for all hands
-        self.fingertip_links: list[str] = [link.name for link in robot.links if "tip" in link.name]
-        assert len(self.fingertip_links) == self.num_fingers
+        self.fingertip_links: list[str] = [link.name for link in robot.links if "tip" in link.name and "head" not in link.name]
+        print(self.fingertip_links)
+        assert len(self.fingertip_links) == self.num_fingers 
 
 
 @dataclass
@@ -75,10 +76,10 @@ class AllegroConfig(RobotConfig):
 
     name: str = "allegro"
     num_fingers: int = 4
-    urdf_path: str = "allegro/allegro_hand_description_right.urdf"
-    base_link: str = "base_link"
+    urdf_path: str = "allegro/allegro.urdf"
+    base_link: str = "base_link"  # link after the virtual arm
 
-    fingertip_grasp_offset: list[float] = field(default_factory=lambda: [0.0, 0.0, 0.013])
+    fingertip_grasp_offset: list[float] = field(default_factory=lambda: [0, 0, 0.0225])
 
 
 def main():
