@@ -10,13 +10,13 @@ from scipy.spatial.transform import Slerp
 from klampt.model import ik
 from klampt.math import se3
 
-from src.anygrasp.robot_config import DexeeConfig
+from src.anygrasp.robot_config import DexeeConfig, RobotConfig
 from src.anygrasp.dataset import GraspDataset, Grasp
 
 
 class GraspDatasetExpander:
 
-    def __init__(self, mesh_filename: str, grasp_dir: str, save_dir: str):
+    def __init__(self, robot_config: RobotConfig, mesh_filename: str, grasp_dir: str, save_dir: str):
         self.mesh_path = mesh_filename
         self.save_dir = save_dir
 
@@ -38,7 +38,7 @@ class GraspDatasetExpander:
             self.grasp_embeddings.append(grasp)
 
         # Load the robot + object
-        self.robot_config = DexeeConfig()
+        self.robot_config = robot_config
         self.world = WorldModel()
         self.world.loadElement(self.robot_config.urdf_path)
         self.object = primitives.Geometry3D()

@@ -40,22 +40,29 @@ class GraspDataset:
         self.joint_angles_array = np.array([grasp.joint_angles for grasp in self.grasps])
         self.object_htms_array = np.array([grasp.object_htm for grasp in self.grasps])
 
+        self._grasp_neighbours = self._knn(k=5)
+
     @staticmethod
     def load_data(grasp_dir: str = "grasps") -> list[Grasp]:
         grasps = []
         for file in os.listdir(grasp_dir):
             with open(f"{grasp_dir}/{file}") as f:
-                data = json.load(f)
+                try:
+                    data = json.load(f)
+                    grasp = Grasp(
+                        robot_name=data["robot_name"],
+                        object_name=data["object_name"],
+                        contact_points=data["contact_points"],
+                        joint_angles=data["joint_angles"],
+                        object_htm=data["object_htm"],
+                        fingertip_assignment=data["fingertip_assignment"]
+                    )
+                    grasps.append(grasp)
+                except json.JSONDecodeError:
+                    print(f"Error decoding JSON from file: {file}")
+                    continue
 
-            grasp = Grasp(
-                robot_name=data["robot_name"],
-                object_name=data["object_name"],
-                contact_points=data["contact_points"],
-                joint_angles=data["joint_angles"],
-                object_htm=data["object_htm"],
-                fingertip_assignment=data["fingertip_assignment"]
-            )
-            grasps.append(grasp)
+            
         return grasps
     
     @staticmethod
@@ -103,6 +110,12 @@ class GraspDataset:
         grasp_neighbours = grasp_knn.kneighbors(self.grasp_embeddings)[1]  # 0 is the distances
         return grasp_neighbours
     
+    @property
+    def k_nearest_neighbours(self):
+        if self._grasp_neighbours is None:
+            self._grasp_neighbours = self._knn(k=5)
+        return self._grasp_neighbours
+
     @property
     def joint_angles(self):
         return self.joint_angles_array

@@ -102,8 +102,9 @@ class GraspGenerator:
 
             def feasible():
                 for link in self.robot.links:
-                    if self.object.collides(link.geometry()):
-                        return False
+                    if link not in link_perm:
+                        if self.object.collides(link.geometry()):
+                            return False
                 return not self.robot.selfCollides()
 
             # If we are executing rough grasps with a policy, can we use solve_nearby?
@@ -162,7 +163,7 @@ class GraspGenerator:
         while not is_valid:
             grasp_point_idx = np.random.randint(0, points.shape[0], self.num_grasp_points)
             self.contact_points = [
-                ContactPoint(p, n, kFriction=0.005) for p, n in zip(points[grasp_point_idx], normals[grasp_point_idx])
+                ContactPoint(p, n, kFriction=0.05) for p, n in zip(points[grasp_point_idx], normals[grasp_point_idx])
             ]
             is_stable = self.analyse_grasp_stability()
             if is_stable:

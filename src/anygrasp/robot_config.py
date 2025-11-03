@@ -56,7 +56,7 @@ class DexeeConfig(RobotConfig):
     base_link: str = "hand_base"  # link after the virtual arm
 
     fingertip_grasp_offset: list[float] = field(
-        default_factory=lambda: [0.0, -0.011804481602826016, 5.551115123125783e-17]
+        default_factory=lambda: [0.0, -0.0095, 5.551115123125783e-17]
     )
 
 
@@ -79,7 +79,8 @@ class AllegroConfig(RobotConfig):
     urdf_path: str = "allegro/allegro.urdf"
     base_link: str = "base_link"  # link after the virtual arm
 
-    fingertip_grasp_offset: list[float] = field(default_factory=lambda: [0, 0, 0.0225])
+    fingertip_grasp_offset: list[float] = field(default_factory=lambda: [0.0133, 0, 0.0133])
+    # [0.013316444347513308, 0.0, 0.013024653659887253]
 
 
 def main():
