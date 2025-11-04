@@ -84,28 +84,33 @@ class GraspDatasetExpander:
 
             self.object.setCurrentTransform(se3.from_homogeneous(interp_htm)[0], se3.from_homogeneous(interp_htm)[1])
 
-            # TODO: readd 0s for each of the fixed joints
-            excluded_dofs = []
+            # Readd the virtual arm and the fixed joints            
+            joints = np.concat(([0, 0, 0, 0, 0, 0], midpoint_joints)).tolist()
             for i in range(self.robot_config.num_joints):
                 if self.robot.getJointType(i) == "weld":
-                    excluded_dofs.append(i)
-            # below is a copilot job, idk if its gonna work
-            joint_angles = np.insert(self.grasp_config, excluded_dofs, 0).tolist()[6:]  # exclude the virtual arm
+                    joints = np.insert(joints, i, 0)
 
-
-            self.robot.setConfig(np.concat(([0, 0, 0, 0, 0, 0], self.joint_angles[grasp_idx])).tolist())
-            valid_grasp = self._solve_ik(grasp_idx, new_grasp_points, midpoint_joints)
+            self.robot.setConfig(joints)
+            valid_grasp = self._solve_ik(grasp_idx, new_grasp_points, joints)
 
             if valid_grasp:
                 grasps_generated += 1
 
-                robot_config = self.robot.getConfig()[6:]  # exclude virtual arm
+                # Get rid of the virtual arm and fixed joints for saving
+
+                joints = self.robot.getConfig()
+                excluded_dofs = []
+                for i in range(self.robot_config.num_joints):
+                    if self.robot.getJointType(i) in ["weld"]:
+                        excluded_dofs.append(i)
+                joint_angles = np.delete(joints, excluded_dofs).tolist()[6:] # exclude the virtual arm
+                assert len(joint_angles) == 16
 
                 grasp = Grasp(
                     robot_name=self.robot_config.name,
                     object_name=self.mesh_path,
                     contact_points=new_grasp_points.tolist(),
-                    joint_angles=robot_config,
+                    joint_angles=joint_angles,
                     object_htm=interp_htm.tolist(),
                     fingertip_assignment=self.finger_assignments[grasp_idx],
                 )
@@ -169,7 +174,7 @@ class GraspDatasetExpander:
                     return False
             return not self.robot.selfCollides()
 
-        self.robot.setConfig(np.concat(([0, 0, 0, 0, 0, 0], midpoint_joints)).tolist())
+        self.robot.setConfig(midpoint_joints)
 
         success = ik.solve_global(
             ik_objectives,
@@ -205,7 +210,11 @@ class GraspDatasetExpander:
             se3.from_homogeneous(self.object_htms[grasp_idx])[0],
             se3.from_homogeneous(self.object_htms[grasp_idx])[1],
         )
-        self.robot_ghost.setConfig(np.concat(([0, 0, 0, 0, 0, 0], self.joint_angles[grasp_idx])).tolist())
+        joints = np.concatenate(([0, 0, 0, 0, 0, 0], self.joint_angles[grasp_idx])).tolist()
+        for i in range(self.robot_config.num_joints):
+            if self.robot.getJointType(i) == "weld":
+                joints = np.insert(joints, i, 0)
+        self.robot_ghost.setConfig(joints)
         vis.clear()
         vis.add("object", self.object)
         vis.add("object_ghost", self.object_ghost, color=[0, 1, 0, 0.5])
