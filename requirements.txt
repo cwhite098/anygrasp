@@ -4,3 +4,4 @@ numpy-stl
 PyOpenGL
 PyQt6
 scipy
+scikit-learn

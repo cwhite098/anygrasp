@@ -60,13 +60,15 @@ class GraspDatasetExpander:
         grasps_generated = 0
         while grasps_generated < n_new_grasps:
 
-            # TODO: integrate with the new grasp dataset
-
             grasp_idx = np.random.randint(0, self.grasp_points.shape[0])
             other_grasp_idx = grasp_neighbours[grasp_idx, 1]
 
             # JOINT MIDPOINT
             midpoint_joints = (self.joint_angles[grasp_idx] + self.joint_angles[other_grasp_idx]) / 2
+
+            if all(self.joint_angles[grasp_idx] == self.joint_angles[other_grasp_idx]) and np.array_equal(self.object_htms[grasp_idx], self.object_htms[other_grasp_idx]):
+                print("IDENTICAL GRASPS")
+                continue
 
             # OBJECT HTM MIDPOINT
             interp_htm = self._find_midpoint_transform(
@@ -104,7 +106,6 @@ class GraspDatasetExpander:
                     if self.robot.getJointType(i) in ["weld"]:
                         excluded_dofs.append(i)
                 joint_angles = np.delete(joints, excluded_dofs).tolist()[6:] # exclude the virtual arm
-                assert len(joint_angles) == 16
 
                 grasp = Grasp(
                     robot_name=self.robot_config.name,
